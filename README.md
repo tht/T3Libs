@@ -12,3 +12,5 @@ I'm not yet sure how this will evolve. I do have plans for my Teensy 3.0 but tim
 limited...
 
 Thanks for your interrest and please send feedback.
+
+Thomas
