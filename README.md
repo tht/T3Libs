@@ -21,7 +21,7 @@ A Teensy 3.0 library to communicate wirelessly using a [HopeRF RFM12B](<http://w
 with JeeNode clones.
 
 ### Required Files ###
-These two files are required in a Arduino library folder or your own Sketch folder to make it work:
+Just clone this repository to your `Arduino Sketches/libraries` folder or copy the following two files in your own Sketch folder to make it work:
 
 * RF12_T3.h
 * RF12_T3.cpp
