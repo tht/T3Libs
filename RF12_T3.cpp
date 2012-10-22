@@ -9,22 +9,22 @@ RF12_T3* RF12_T3::_instance = 0; // init singleton
 
 
 /**
- * reinit(uint8_t irq, uint8_t id, uint8_t band, uint8_t group)
+ * reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate)
  * (Re)initializes the RFM12 module with supplied arguments. It
  * actually requests a reset from the RFM12 module and waits until
  * it responds back. Use isAvailable() to check if init was successful.
  * Mode will be RF_IDLE after successful initialization.
- * Params: irq:  Port where the RFM12 irq line is conencted to (only 4 currently)
- *         id:   NodeId of this node
+ * Params: id:   NodeId of this node
  *         band: Frequency band (see constants in this file)
  *         group: RFM12 group (second sync byte)
+ *         rate: Datarate to use
  * Return: void
  */
-int RF12_T3::reinit(uint8_t irq, uint8_t id, uint8_t band, uint8_t group) {
+int RF12_T3::reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate) {
   nodeId = id;
   groupId= group;
   bandId = band;
-  irqLine = irq;
+  datarate = rate;
   available = 0;
 
   // configure SPI pins
@@ -54,8 +54,8 @@ int RF12_T3::reinit(uint8_t irq, uint8_t id, uint8_t band, uint8_t group) {
   buffer[1] = 0;  // reset len
 
   // register irq
-  pinMode(irq, INPUT);
-  attachInterrupt(irq, RF12_T3::_handleIrq4, LOW);
+  pinMode(irqLine, INPUT);
+  attachInterrupt(irqLine, RF12_T3::_handleIrq4, LOW);
 
   // requesting RFM12b reset
   rf12_xfer(0xCA82); // enable software reset
@@ -163,7 +163,7 @@ void RF12_T3::handleIrq() {
     rf12_xfer(0x82D9); 
     rfMode = 0x82D9; rfMode = 0x82D9; // rx enabled, wakeup disabled, lowbat disabled
     rf12_xfer(0xA640);
-    rf12_xfer(0xC640);
+    rf12_xfer(0xC600 | datarate);
     rf12_xfer(0x94A2);
     rf12_xfer(0xC2AC);
     rf12_xfer(0xCA83);
@@ -302,6 +302,7 @@ void RF12_T3::sendStart(uint8_t hdr) {
  * Return: void
  */
 void RF12_T3::sendStart(uint8_t hdr, const void *ptr, uint8_t len) {
+  state = RF_IDLE;
   buffer[0] = hdr;
   buffer[1] = len;
   memcpy((void*) &buffer[2], ptr, len);

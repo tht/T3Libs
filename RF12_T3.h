@@ -25,16 +25,19 @@ class RF12_T3 {
     // Init
 
     // returns instance for IRQ pin 4
-    static RF12_T3* irqLine4(uint8_t id, uint8_t band, uint8_t group) {
+    static RF12_T3* irqLine4() {
       if (!_instance) {
         _instance = (RF12_T3*)malloc(sizeof(RF12_T3));
-        _instance->reinit(4, id, band, group);
+        _instance->setIrq(4);
       }
       return _instance;
     }
     
     // Inits RFM12b
-    int reinit(uint8_t irqLine, uint8_t id, uint8_t band, uint8_t group);
+    int reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate);
+    int reinit(uint8_t id, uint8_t band, uint8_t group) {
+        return reinit(id, band, group, 0x06); // JeeNode datarate
+    }
 
 
     // =====================================================
@@ -132,6 +135,7 @@ class RF12_T3 {
     uint8_t nodeId;
     uint8_t groupId;
     uint8_t bandId;
+    uint8_t datarate;
 
   
     // =====================================================
@@ -169,6 +173,9 @@ class RF12_T3 {
     // Singleton handling
     static RF12_T3* _instance;
     RF12_T3(); // private -> singleton
+    void setIrq(uint8_t irq){
+        irqLine = irq;
+    }
 };
 
 #endif

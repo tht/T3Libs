@@ -8,7 +8,7 @@
 HardwareSerial Uart = HardwareSerial();
 
 // RFM12b Module on irqLine4, nodeid 21, 868MHz, group 212
-RF12_T3 *RF12 = RF12_T3::irqLine4(21, RF12_BAND868MHZ, 212);
+RF12_T3 *RF12 = RF12_T3::irqLine4();
 
 
 /**
@@ -19,6 +19,9 @@ void setup() {
   // init debug output
   Uart.begin(115200);
   Uart.println("Starting...");
+  
+  // Very slow non JeeNode datarate! Remove 0x40 to get JeeNode defaults.
+  RF12->reinit(21, RF12_BAND868MHZ, 212, 0x40);
 
   // Wait until we're allowed to send, send an empty packet
   while(! RF12->canSend()) ;
