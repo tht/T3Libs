@@ -41,6 +41,14 @@ The driver is work-in-progress, a 0.something version. I'm able to send and rece
 	'.......'          '......'
 Don't forget power and ground :-)
 
+### Where To Get The Parts? ###
+* [Teensy 3.0](http://www.pjrc.com/store/teensy3.html) (available soon)
+* RFM12b module (I highly recommend a breakout board as it has non-standard pin spacing)
+	* [868MHz at JeeLabs.com](http://jeelabs.com/products/rfm12b-board) (only legal in Europe as far as I know)
+	* [915MHz at ModernDevice.com](http://shop.moderndevice.com/products/rfm12b-board) (only legal in U.S. and Australia as far as I know)
+	* There are many more shops and also a 443MHz
+ * I do recommend a solderless breadboard and some wires to connect the stuff.
+
 ### Addition Informations ###
 Most of the information about the RFM12B SPI interface I got from the german site [www.mikrocontroller.net](http://www.mikrocontroller.net/articles/RFM12).
 
