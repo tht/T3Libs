@@ -26,6 +26,7 @@ int RF12_T3::reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate) {
   bandId = band;
   datarate = rate;
   available = 0;
+  reportBroken = 0;
 
   // configure SPI pins
   digitalWrite(SCK, LOW);

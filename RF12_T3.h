@@ -65,8 +65,18 @@ class RF12_T3 {
         _recvDone = 0;
       } else if (_recvDone) {
         state = RF_IDLE;
+        if (!reportBroken && rf12_crc!=0x0000)
+          _recvDone = 0;  // ignore packet, because of invalid checksum
       }
       return _recvDone;
+    }
+    
+    boolean getReportBroken() {
+      return reportBroken;
+    }
+
+    void setReportBroken(boolean report) {
+      reportBroken = report;
     }
 
 
@@ -129,19 +139,21 @@ class RF12_T3 {
     uint8_t irqLine;          // where irq from RFM12b is connected to
     volatile uint8_t _toSend; // next byte to send while transmitting (RF_TX*)
 
+    boolean reportBroken;     // report packets with invalid checksum to Sketch?
+    
 
     // =====================================================
     // Network infos
     uint8_t nodeId;
     uint8_t groupId;
     uint8_t bandId;
-    uint8_t datarate;
 
   
     // =====================================================
     // RFM12b infos
     boolean available;  // did module responhd to reset command
     boolean wakeup;     // did we receive a wakeup?
+    uint8_t datarate;
     volatile boolean _recvDone; // a message is waiting in "buffer"
 
 
