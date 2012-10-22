@@ -149,8 +149,8 @@ void RF12_T3::handleIrq() {
           case RF_TXCRC2: _toSend = 0xff & (rf12_crc>>8);   break;
           case RF_TXTAIL1: _toSend = 0xAA; break; // dummy
           case RF_TXTAIL2: break; // dummy
-          case RF_TXDONE: disableTransmitter(); // switch off transmitter, fall through
-          default:        _toSend = 0x99;
+          case RF_TXDONE: _toSend = 0x99; // dummy, fall through
+          default:        disableTransmitter(); state = RF_IDLE;  // make sure we're back on track
         }
       }
     }
