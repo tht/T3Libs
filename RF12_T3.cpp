@@ -37,13 +37,13 @@ int RF12_T3::reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate) {
   pinMode(SS, OUTPUT); // is pin 10
 
   // enables and configures SPI module
-  SIM_SCGC6 |= SIM_SCGC6_SPI0;  // enable crc clock
+  SIM_SCGC6 |= SIM_SCGC6_SPI0;  // enable SPI clock
   SPI0_MCR = 0x80004000;
   SPCR |= _BV(MSTR);
   SPCR |= _BV(SPE);
   SPCR &= ~(_BV(DORD));   // MSBFIRST SPI
 
-  // 12MHz 16bit transfers on CTAR0
+  // 16MHz 16bit transfers on CTAR0
   SPI0_CTAR0 = 0xF8010000;
 
   // 2MHz 8bit transfers on CTAR1 (for reading FIFO)
