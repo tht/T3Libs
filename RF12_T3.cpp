@@ -29,9 +29,9 @@ int RF12_T3::reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate) {
   reportBroken = 0;
 
   // configure SPI pins
-  digitalWrite(SCK, LOW);
-  digitalWrite(MOSI, LOW);
-  digitalWrite(SS, HIGH);
+  digitalWriteFast(SCK, LOW);
+  digitalWriteFast(MOSI, LOW);
+  digitalWriteFast(SS, HIGH);
   pinMode(SCK, OUTPUT);
   pinMode(MOSI, OUTPUT);
   pinMode(SS, OUTPUT); // is pin 10
@@ -71,10 +71,10 @@ int RF12_T3::reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate) {
  * Return: From RFM12 module received data
  */
 inline uint16_t RF12_T3::rf12_xfer(uint16_t data) {
-  digitalWrite(10, LOW);
+  digitalWriteFast(10, LOW);
   SPI0_PUSHR = (1<<26) | data;    // send data (clear transfer counter)
   while (! SPI0_TCR) ; // loop until transfer is complete
-  digitalWrite(10, HIGH);
+  digitalWriteFast(10, HIGH);
   return SPI0_POPR;
 }
 
@@ -91,7 +91,7 @@ void RF12_T3::handleIrq() {
     return;
 
   // reading state
-  digitalWrite(10, LOW);  // select RFM12b module
+  digitalWriteFast(10, LOW);  // select RFM12b module
   SPI0_PUSHR = (1<<26) | 0x0000;    // send data (clear transfer counter)
   while (! SPI0_TCR) ; // loop until transfer is complete
   uint16_t res = SPI0_POPR;
@@ -105,7 +105,7 @@ void RF12_T3::handleIrq() {
       SPI0_PUSHR = (1<<28) | (1<<26); // CTAR1 transfer (slow 8bit), clear transfer counter
       while (! SPI0_TCR) ; // loop until transfer is complete
       uint8_t data = (uint8_t) SPI0_POPR;
-      digitalWrite(10, HIGH);
+      digitalWriteFast(10, HIGH);
 
       // save data to internal buffer
       buffer[_index++] = data;
@@ -130,7 +130,7 @@ void RF12_T3::handleIrq() {
     // =====================================================
     // Buffer needs neyt byte to send
     } else {
-      digitalWrite(10, HIGH);
+      digitalWriteFast(10, HIGH);
 
       rf12_xfer(0xB800 | _toSend);
       
@@ -155,7 +155,7 @@ void RF12_T3::handleIrq() {
       }
     }
   } else
-    digitalWrite(10, HIGH);  // don't forget to disable CS to RFM module
+    digitalWriteFast(10, HIGH);  // don't forget to disable CS to RFM module
 
   // =====================================================
   // Power-On reset complete, do init now
