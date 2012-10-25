@@ -65,7 +65,8 @@ class RF12_T3 {
         _recvDone = 0;
       } else if (_recvDone) {
         state = RF_IDLE;
-        if (!reportBroken && rf12_crc!=0x0000)
+        if ( (!reportBroken && rf12_crc!=0x0000)  // report broken packets?
+           | (buffer[0] & (1<<6) && (buffer[0] & 0x1F)!=nodeId) ) // not for us
           _recvDone = 0;  // ignore packet, because of invalid checksum
       }
       return _recvDone;
