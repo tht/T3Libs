@@ -54,6 +54,9 @@ int RF12_T3::reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate) {
   buffer[0] = 0;  // reset header
   buffer[1] = 0;  // reset len
 
+  // ARSSI
+  pinMode(A0, INPUT);
+    
   // register irq
   pinMode(irqLine, INPUT);
   attachInterrupt(irqLine, RF12_T3::_handleIrq4, LOW);
@@ -111,10 +114,12 @@ void RF12_T3::handleIrq() {
       buffer[_index++] = data;
 
       if (_index==1) {          // first packet!
+        arssi = analogRead(A0);
         rf12_crc = crc16_update(0xffff, groupId); // network group id
         rf12_crc = crc16_update(rf12_crc, data);
 
       } else if (_index==2) {   // second packet (with length)
+        arssi = ( arssi + analogRead(A0) ) / 2;
         rf12_crc = crc16_update(rf12_crc, data);
 
       } else {                  // data (or crc)

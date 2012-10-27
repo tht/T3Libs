@@ -11,6 +11,9 @@ HardwareSerial Uart = HardwareSerial();
 RF12_T3 *RF12 = RF12_T3::irqLine4();
 
 
+int arssi[32];
+
+
 /**
  * setup()
  * Prepare Uart for output and send some data
@@ -42,15 +45,18 @@ void setup() {
  */
 void loop() {
   if (RF12->recvDone()) {
-    int i;
+    int nodeId = RF12->buffer[0] & 0x1F;
+    int a = RF12->getARRSI();
     Uart.println("Got a packet!");
+    Uart.print("  Source: "); Uart.println(nodeId, DEC);
     Uart.print("  Length: "); Uart.println(RF12->buffer[1], DEC);
+    Uart.print("  ARSSI:  "); Uart.println(a, DEC);
     
     // print header of packet
     Uart.print("  -> "); Uart.print(RF12->buffer[0], DEC);
 
     // print content of packet
-    for(i=0; i<RF12->buffer[1]; i++) {
+    for(int i=0; i<RF12->buffer[1]; i++) {
       Uart.print(" ");
       Uart.print(RF12->buffer[i+2], DEC);
     }
@@ -61,5 +67,23 @@ void loop() {
     else
       Uart.println(": CRC failed :-(");
     Uart.flush();
+    
+    // Update arssi table
+    if (arssi[nodeId]==0)
+      arssi[nodeId]=a;
+    else
+      arssi[nodeId]=(arssi[nodeId]+a)/2;
+      
+    // output arssi list
+    Uart.print("ARSSI: ");
+    for (int i=0; i<32; i++) {
+      if (arssi[i]>0) {
+        Uart.print(i, DEC);
+        Uart.print(":");
+        Uart.print(arssi[i], DEC);
+        Uart.print("mV "); 
+      }
+    }
+    Uart.println();
   }
 }

@@ -79,6 +79,10 @@ class RF12_T3 {
     void setReportBroken(boolean report) {
       reportBroken = report;
     }
+    
+    uint16_t getARRSI() {
+      return map(arssi, 0,1024, 0, 3301); // map analog value to mV
+    }
 
 
     // =====================================================
@@ -156,6 +160,7 @@ class RF12_T3 {
     boolean wakeup;     // did we receive a wakeup?
     uint8_t datarate;
     volatile boolean _recvDone; // a message is waiting in "buffer"
+    volatile int arssi; // received signal strength (analogRead value)
 
 
     // =====================================================
