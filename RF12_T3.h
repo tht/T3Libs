@@ -76,12 +76,23 @@ class RF12_T3 {
       return reportBroken;
     }
 
+    // enable reporting of packages with invalid CRC
     void setReportBroken(boolean report) {
       reportBroken = report;
     }
     
+    // return signal strength measured on analog input
     uint16_t getARRSI() {
       return map(arssi, 0,1024, 0, 3301); // map analog value to mV
+    }
+
+    // return signal strength calculated out of DRSSI bit
+    int8_t getDRSSI() {
+      if (! drssi & B1000)
+        return 0;
+    
+        const int8_t table[] = {-106, -100, -94, -88, -82, -76, -70};
+        return table[drssi & B111];
     }
 
 
@@ -120,6 +131,7 @@ class RF12_T3 {
     // IRQ handling stuff (internal use only)
     void handleIrq();
 
+    volatile uint8_t drssi; // received signal strength (see dssi table)
 
   private:
 

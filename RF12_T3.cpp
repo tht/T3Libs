@@ -8,6 +8,31 @@
 RF12_T3* RF12_T3::_instance = 0; // init singleton
 
 
+/*
+ * drssi_dec_tree[] is an array used to do a binary
+ * search to get the most accurate dssi value out
+ * of the RFM12b module. drssi holds the actual value.
+ * if drssi <=5 then we are still searching in this array
+ * drssi & B1000 indicate terminated states where getDSSIdB()
+ * allows to querty the correct values.
+ */
+struct drssi_dec_t {
+    uint8_t up;
+    uint8_t down;
+    uint8_t threshold;
+};
+
+const drssi_dec_t drssi_dec_tree[] = {
+            /*  up    down  thres*/
+    /* 0 */ { B1001, B1000, B000 },
+    /* 1 */ { B0010, B0000, B001 },
+    /* 2 */ { B1011, B1010, B010 },
+    /* 3 */ { B0101, B0001, B011 },
+    /* 4 */ { B1101, B1100, B100 },
+    /* 5 */ { B1110, B0100, B101 }
+};
+
+
 /**
  * reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate)
  * (Re)initializes the RFM12 module with supplied arguments. It
@@ -110,6 +135,17 @@ void RF12_T3::handleIrq() {
       uint8_t data = (uint8_t) SPI0_POPR;
       digitalWriteFast(10, HIGH);
 
+      // do drssi binary-tree search
+      if ( drssi < 6 ) {       // not yet final value
+        if ( bitRead(res,8) )  // rssi over threashold?
+          drssi = drssi_dec_tree[drssi].up;
+        else
+          drssi = drssi_dec_tree[drssi].down;
+        if ( drssi < 6 ) {     // not yet final destination
+          rf12_xfer(0x94A0 | drssi_dec_tree[drssi].threshold);
+        }
+      }
+        
       // save data to internal buffer
       buffer[_index++] = data;
 
@@ -119,7 +155,6 @@ void RF12_T3::handleIrq() {
         rf12_crc = crc16_update(rf12_crc, data);
 
       } else if (_index==2) {   // second packet (with length)
-        arssi = ( arssi + analogRead(A0) ) / 2;
         rf12_crc = crc16_update(rf12_crc, data);
 
       } else {                  // data (or crc)
@@ -170,7 +205,7 @@ void RF12_T3::handleIrq() {
     rfMode = 0x82D9; rfMode = 0x82D9; // rx enabled, wakeup disabled, lowbat disabled
     rf12_xfer(0xA640);
     rf12_xfer(0xC600 | datarate);
-    rf12_xfer(0x94A2);
+    rf12_xfer(0x94A3);
     rf12_xfer(0xC2AC);
     rf12_xfer(0xCA83);
     rf12_xfer(0xCE00 | groupId); // sync Byte (group id)
@@ -216,10 +251,16 @@ void RF12_T3::handleIrq() {
  * Return: void
  */
 void RF12_T3::enableReceiver() {
+  // init drssi detection tree
+  drssi = 3;
+  rf12_xfer(0x94A0 | drssi_dec_tree[drssi].threshold);
+
+  // switch RFM12b state
   bitSet(rfMode,  7);   // enable receiver
   bitSet(rfMode,  6);   // enable recv. baseband
   bitClear(rfMode,5);   // disable transmitter
   rf12_xfer(rfMode);
+  
   state = RF_RECV;
 }
 
