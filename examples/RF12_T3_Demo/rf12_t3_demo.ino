@@ -12,6 +12,7 @@ RF12_T3 *RF12 = RF12_T3::irqLine4();
 
 
 int arssi[32];
+int drssi[32];
 
 
 /**
@@ -47,10 +48,12 @@ void loop() {
   if (RF12->recvDone()) {
     int nodeId = RF12->buffer[0] & 0x1F;
     int a = RF12->getARRSI();
+    int d = RF12->getDRSSI();
     Uart.println("Got a packet!");
     Uart.print("  Source: "); Uart.println(nodeId, DEC);
     Uart.print("  Length: "); Uart.println(RF12->buffer[1], DEC);
     Uart.print("  ARSSI:  "); Uart.println(a, DEC);
+    Uart.print("  DRSSI:  "); Uart.println(d, DEC);
     
     // print header of packet
     Uart.print("  -> "); Uart.print(RF12->buffer[0], DEC);
@@ -73,15 +76,20 @@ void loop() {
       arssi[nodeId]=a;
     else
       arssi[nodeId]=(arssi[nodeId]+a)/2;
+
+    // Update drssi table
+    drssi[nodeId]=d;
       
-    // output arssi list
-    Uart.print("ARSSI: ");
+    // output rssi list
+    Uart.print("RSSI: ");
     for (int i=0; i<32; i++) {
-      if (arssi[i]>0) {
+      if (arssi[i]!=0) {
         Uart.print(i, DEC);
         Uart.print(":");
         Uart.print(arssi[i], DEC);
-        Uart.print("mV "); 
+        Uart.print("mV ("); 
+        Uart.print(drssi[i], DEC);
+        Uart.print("dB) "); 
       }
     }
     Uart.println();
