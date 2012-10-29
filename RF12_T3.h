@@ -81,11 +81,6 @@ public:
         reportBroken = report;
     }
     
-    // return signal strength measured on analog input
-    uint16_t getARRSI() {
-        return map(arssi, 0,1024, 0, 3301); // map analog value to mV
-    }
-    
     // return signal strength calculated out of DRSSI bit
     int8_t getDRSSI() {
         if (! drssi & B1000)
@@ -172,7 +167,6 @@ private:
     boolean wakeup;     // did we receive a wakeup?
     uint8_t datarate;
     volatile boolean _recvDone; // a message is waiting in "buffer"
-    volatile int arssi; // received signal strength (analogRead value)
     
     
     // =====================================================
