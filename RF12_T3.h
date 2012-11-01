@@ -26,13 +26,22 @@ public:
     
     // returns instance for IRQ pin 4
     static RF12_T3* irqLine4() {
-        if (!_instance) {
-            _instance = (RF12_T3*)malloc(sizeof(RF12_T3));
-            _instance->setIrq(4);
+        if (!_instance4) {
+            _instance4 = (RF12_T3*)malloc(sizeof(RF12_T3));
+            _instance4->setPins(10,4);
         }
-        return _instance;
+        return _instance4;
     }
-    
+
+    // returns instance for IRQ pin 3
+    static RF12_T3* irqLine3() {
+        if (!_instance3) {
+            _instance3 = (RF12_T3*)malloc(sizeof(RF12_T3));
+            _instance3->setPins(9,3);
+        }
+        return _instance3;
+    }
+
     // Inits RFM12b
     int reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate);
     int reinit(uint8_t id, uint8_t band, uint8_t group) {
@@ -148,7 +157,7 @@ private:
     
     volatile int8_t state;    // see enum above
     volatile uint16_t rfMode; // current mode of RFM module (0x82xx)
-    uint8_t irqLine;          // where irq from RFM12b is connected to
+    uint8_t irqLine, csLine;  // irq from RFM12b and CS
     volatile uint8_t _toSend; // next byte to send while transmitting (RF_TX*)
     
     boolean reportBroken;     // report packets with invalid checksum to Sketch?
@@ -178,10 +187,14 @@ private:
     
     inline uint16_t rf12_xfer(uint16_t data);
     
-    static void _handleIrq4() {
-        _instance->handleIrq();
+    inline static void _handleIrq4() {
+        _instance4->handleIrq();
     }
-    
+
+    inline static void _handleIrq3() {
+        _instance3->handleIrq();
+    }
+
     
     // =====================================================
     // Receive/send buffer handling
@@ -195,10 +208,13 @@ private:
     
     // =====================================================
     // Singleton handling
-    static RF12_T3* _instance;
+    static RF12_T3 *_instance4, *_instance3;
+    
     RF12_T3(); // private -> singleton
-    void setIrq(uint8_t irq){
+    
+    void setPins(uint8_t cs, uint8_t irq){
         irqLine = irq;
+        csLine  = cs;
     }
 };
 

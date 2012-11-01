@@ -5,7 +5,8 @@
 #include "RF12_T3.h"
 
 // Init singleton cariable
-RF12_T3* RF12_T3::_instance = 0; // init singleton
+RF12_T3* RF12_T3::_instance4 = 0; // init singleton
+RF12_T3* RF12_T3::_instance3 = 0; // init singleton
 
 
 /*
@@ -56,10 +57,10 @@ int RF12_T3::reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate) {
     // configure SPI pins
     digitalWriteFast(SCK, LOW);
     digitalWriteFast(MOSI, LOW);
-    digitalWriteFast(SS, HIGH);
+    digitalWriteFast(csLine, HIGH);
     pinMode(SCK, OUTPUT);
     pinMode(MOSI, OUTPUT);
-    pinMode(SS, OUTPUT); // is pin 10
+    pinMode(csLine, OUTPUT);
     
     // enables and configures SPI module
     SIM_SCGC6 |= SIM_SCGC6_SPI0;  // enable SPI clock
@@ -70,6 +71,7 @@ int RF12_T3::reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate) {
     
     // 16MHz 16bit transfers on CTAR0
     SPI0_CTAR0 = 0xF8010000;
+    SPI0_CTAR0 = 0x78010000;  // TESTING
     
     // 2MHz 8bit transfers on CTAR1 (for reading FIFO)
     SPI0_CTAR1 = 0x38010002;
@@ -81,7 +83,10 @@ int RF12_T3::reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate) {
     
     // register irq
     pinMode(irqLine, INPUT);
-    attachInterrupt(irqLine, RF12_T3::_handleIrq4, LOW);
+    if (irqLine == 4)
+        attachInterrupt(irqLine, RF12_T3::_handleIrq4, LOW);
+    else if (irqLine == 3)
+        attachInterrupt(irqLine, RF12_T3::_handleIrq3, LOW);
     
     // requesting RFM12b reset
     rf12_xfer(0xCA82); // enable software reset
@@ -96,10 +101,10 @@ int RF12_T3::reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate) {
  * Return: From RFM12 module received data
  */
 inline uint16_t RF12_T3::rf12_xfer(uint16_t data) {
-    digitalWriteFast(10, LOW);
+    digitalWriteFast(csLine, LOW);
     SPI0_PUSHR = (1<<26) | data;    // send data (clear transfer counter)
     while (! SPI0_TCR) ; // loop until transfer is complete
-    digitalWriteFast(10, HIGH);
+    digitalWriteFast(csLine, HIGH);
     return SPI0_POPR;
 }
 
@@ -116,7 +121,7 @@ void RF12_T3::handleIrq() {
         return;
     
     // reading state
-    digitalWriteFast(10, LOW);  // select RFM12b module
+    digitalWriteFast(csLine, LOW);  // select RFM12b module
     SPI0_PUSHR = (1<<26) | 0x0000;    // send data (clear transfer counter)
     while (! SPI0_TCR) ; // loop until transfer is complete
     uint16_t res = SPI0_POPR;
@@ -130,7 +135,7 @@ void RF12_T3::handleIrq() {
             SPI0_PUSHR = (1<<28) | (1<<26); // CTAR1 transfer (slow 8bit), clear transfer counter
             while (! SPI0_TCR) ; // loop until transfer is complete
             uint8_t data = (uint8_t) SPI0_POPR;
-            digitalWriteFast(10, HIGH);
+            digitalWriteFast(csLine, HIGH);
             
             // do drssi binary-tree search
             if ( drssi < 6 ) {       // not yet final value
@@ -166,7 +171,7 @@ void RF12_T3::handleIrq() {
             // =====================================================
             // Buffer needs neyt byte to send
         } else {
-            digitalWriteFast(10, HIGH);
+            digitalWriteFast(csLine, HIGH);
             
             rf12_xfer(0xB800 | _toSend);
             
@@ -191,7 +196,7 @@ void RF12_T3::handleIrq() {
             }
         }
     } else
-        digitalWriteFast(10, HIGH);  // don't forget to disable CS to RFM module
+        digitalWriteFast(csLine, HIGH);  // don't forget to disable CS to RFM module
     
     // =====================================================
     // Power-On reset complete, do init now
