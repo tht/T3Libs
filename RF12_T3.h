@@ -17,6 +17,14 @@
 #define RF12_BAND915MHZ 3
 
 
+/**
+ * Some additional definitions to use CRC unit
+ */
+#define CRC_CRC8    *(volatile uint8_t  *)0x40032000 // for adding a single byte to CRC
+#define CRC_CRC16   *(volatile uint16_t *)0x40032000 // for writing seed and reading result
+#define CRC_GPOLY16 *(volatile uint16_t *)0x40032004 // for writing polynomial
+
+
 class RF12_T3 {
     
 public:
@@ -123,11 +131,6 @@ public:
     
     
     // =====================================================
-    // CRC (does not touch internal state, so public)
-    inline static uint16_t crc16_update(uint16_t crc, uint8_t a);
-    
-    
-    // =====================================================
     // IRQ handling stuff (internal use only)
     void handleIrq();
     
@@ -167,7 +170,7 @@ private:
     
     // =====================================================
     // RFM12b infos
-    boolean available;  // did module responhd to reset command
+    boolean available;  // did module respond to reset command
     boolean wakeup;     // did we receive a wakeup?
     uint8_t datarate;
     volatile boolean _recvDone; // a message is waiting in "buffer"
