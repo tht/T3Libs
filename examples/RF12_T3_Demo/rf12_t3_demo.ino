@@ -36,6 +36,8 @@ void setup() {
   Uart.println("Sending a packet...");
   uint32_t data = 0x12345678;
   RF12->sendStart(0, &data, 4);
+  
+  Uart.flush();
 }
 
 
@@ -64,7 +66,9 @@ void loop() {
 
     Uart.print(" (");
     Uart.print(d, DEC);
-    Uart.println("dB)");
+    Uart.print("dB, AFC: ");
+    Uart.print(RF12->getAFCOffset(), DEC);
+    Uart.println(")");
     Uart.flush();
     
     // Update drssi table
