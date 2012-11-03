@@ -204,6 +204,18 @@ private:
     
     
     // =====================================================
+    // CRC
+    void initCRC() {
+        SIM_SCGC6 |= SIM_SCGC6_CRC;                  // enable crc clock
+        CRC_CTRL = 0x00000000 | (1 <<30) | (1 <<28); // 16bit mode with some translation
+        CRC_GPOLY16 = 0x8005;                        // polynom
+        bitSet(CRC_CTRL,25);                         // prepare to write seed
+        CRC_CRC16 = 0xffff;                          // this is the seed
+        bitClear(CRC_CTRL,25);                       // prepare to write data
+    }
+    
+    
+    // =====================================================
     // Singleton handling
     static RF12_T3* _instance;
     RF12_T3(); // private -> singleton

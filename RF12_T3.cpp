@@ -147,13 +147,7 @@ void RF12_T3::handleIrq() {
             buffer[_index++] = data;
             
             if (_index==1) {          // first packet!
-                SIM_SCGC6 |= SIM_SCGC6_CRC;                  // enable crc clock
-                CRC_CTRL = 0x00000000 | (1 <<30) | (1 <<28); // 16bit mode with some translation
-                CRC_GPOLY16 = 0x8005;                        // polynom
-                bitSet(CRC_CTRL,25);                         // prepare to write seed
-                CRC_CRC16 = 0xffff;                          // this is the seed
-                bitClear(CRC_CTRL,25);                       // prepare to write data
-
+                initCRC();
                 CRC_CRC8 = groupId;
                 CRC_CRC8 = data;
                 
@@ -359,15 +353,7 @@ void RF12_T3::sendStart(uint8_t hdr, const void *ptr, uint8_t len) {
     buffer[0] = hdr;
     buffer[1] = len;
     memcpy((void*) &buffer[2], ptr, len);
-    
-    // preparing CRC unit
-    SIM_SCGC6 |= SIM_SCGC6_CRC;                  // enable crc clock
-    CRC_CTRL = 0x00000000 | (1 <<30) | (1 <<28); // 16bit mode with some translation
-    CRC_GPOLY16 = 0x8005;                        // polynom
-    bitSet(CRC_CTRL,25);                         // prepare to write seed
-    CRC_CRC16 = 0xffff;                          // this is the seed
-    bitClear(CRC_CTRL,25);                       // prepare to write data
-    
+    initCRC();
     enableTransmitter();
 }
 
