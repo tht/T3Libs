@@ -156,6 +156,8 @@ void RF12_T3::handleIrq() {
             } else {                  // data (or crc)
                 rf12_crc = crc16_update(rf12_crc, data);
                 
+                afc_offset = ((state & 0x0010)?-1:1) * state&0x000F;
+                
                 // abort reception if we got a full packet
                 if (_index > buffer[1] + 3) { // +1 for header, +2 for checksum
                     disableReceiver();
@@ -205,7 +207,7 @@ void RF12_T3::handleIrq() {
         rf12_xfer(0xC2AC);
         rf12_xfer(0xCA83);
         rf12_xfer(0xCE00 | groupId); // sync Byte (group id)
-        rf12_xfer(0xC483);
+        rf12_xfer(0xC493);
         rf12_xfer(0x9850);
         rf12_xfer(0xCC57);
         //rf12_xfer(0xE000); // no wakeup timer

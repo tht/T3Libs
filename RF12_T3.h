@@ -91,6 +91,11 @@ public:
     }
     
     
+    int8_t getAFCOffset() {
+        return afc_offset;
+    }
+    
+    
     // =====================================================
     // Transmitting data
     
@@ -126,7 +131,6 @@ public:
     // IRQ handling stuff (internal use only)
     void handleIrq();
     
-    volatile uint8_t drssi; // received signal strength (see dssi table)
     
 private:
     
@@ -167,7 +171,10 @@ private:
     boolean wakeup;     // did we receive a wakeup?
     uint8_t datarate;
     volatile boolean _recvDone; // a message is waiting in "buffer"
-    
+ 
+    volatile uint8_t drssi; // received signal strength (see dssi table)
+    volatile int8_t afc_offset; // received signal AFC offset
+
     
     // =====================================================
     // Enable/Disable components / communicate to RFM12b module
