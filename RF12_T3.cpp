@@ -152,19 +152,23 @@ void RF12_T3::handleIrq() {
             buffer[_index++] = data;
             
             if (_index==1) {          // first packet!
-                rf12_crc = crc16_update(0xffff, groupId); // network group id
-                rf12_crc = crc16_update(rf12_crc, data);
+                initCRC();
+                CRC_CRC8 = groupId;
+                CRC_CRC8 = data;
                 
             } else if (_index==2) {   // second packet (with length)
-                rf12_crc = crc16_update(rf12_crc, data);
+                CRC_CRC8 = data;
                 
             } else {                  // data (or crc)
-                rf12_crc = crc16_update(rf12_crc, data);
+                CRC_CRC8 = data;
+                
+                afc_offset = ((state & 0x0010)?-1:1) * state&0x000F;
                 
                 // abort reception if we got a full packet
                 if (_index > buffer[1] + 3) { // +1 for header, +2 for checksum
                     disableReceiver();
                     _recvDone = 1;
+                    rf12_crc = CRC_CRC16;
                 }
             }
             
@@ -178,16 +182,16 @@ void RF12_T3::handleIrq() {
             // prepare next byte to send
             if (state < 0) {
                 _toSend = buffer[2 + buffer[1] + state++];
-                rf12_crc = crc16_update(rf12_crc, _toSend);
+                CRC_CRC8 = _toSend;
             } else {
                 switch (++state) {
                     case RF_TXSYN1: _toSend = 0x2D; break;
                     case RF_TXSYN2: _toSend = groupId;
-                        rf12_crc = crc16_update(0xffff, groupId);
+                        CRC_CRC8 = _toSend;
                         state = - (2 + buffer[1]);
                         break;
-                    case RF_TXCRC1: _toSend = 0xff & rf12_crc; break;
-                    case RF_TXCRC2: _toSend = 0xff & (rf12_crc>>8);   break;
+                    case RF_TXCRC1: _toSend = 0xff & (CRC_CRC16>>8); break;
+                    case RF_TXCRC2: _toSend = 0xff & (CRC_CRC16);   break;
                     case RF_TXTAIL1: _toSend = 0xAA; break; // dummy
                     case RF_TXTAIL2: break; // dummy
                     case RF_TXDONE: _toSend = 0x99; // dummy, fall through
@@ -210,7 +214,7 @@ void RF12_T3::handleIrq() {
         rf12_xfer(0xC2AC);
         rf12_xfer(0xCA83);
         rf12_xfer(0xCE00 | groupId); // sync Byte (group id)
-        rf12_xfer(0xC483);
+        rf12_xfer(0xC493);
         rf12_xfer(0x9850);
         rf12_xfer(0xCC57);
         //rf12_xfer(0xE000); // no wakeup timer
@@ -354,25 +358,8 @@ void RF12_T3::sendStart(uint8_t hdr, const void *ptr, uint8_t len) {
     buffer[0] = hdr;
     buffer[1] = len;
     memcpy((void*) &buffer[2], ptr, len);
-    rf12_crc = crc16_update(0xffff, groupId);
+    initCRC();
     enableTransmitter();
-}
-
-
-/**
- * crc16_update(int crc, int a)
- * Appends a new byte to the existing checksum in crc. Uses same format as in JeeLib.
- * Params: crc: Old crc value or seed on initial run
- *         a;   New data to feed into crc
- * Return: new crc value
- */
-inline uint16_t RF12_T3::crc16_update(uint16_t crc, uint8_t a) {
-    crc ^= a;
-    for (uint8_t i = 0; i < 8; ++i) {
-        if (crc & 1)  crc = (crc >> 1) ^ 0xA001;
-        else          crc = (crc >> 1);
-    }
-    return crc;
 }
 
 

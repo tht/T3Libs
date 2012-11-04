@@ -17,6 +17,14 @@
 #define RF12_BAND915MHZ 3
 
 
+/**
+ * Some additional definitions to use CRC unit
+ */
+#define CRC_CRC8    *(volatile uint8_t  *)0x40032000 // for adding a single byte to CRC
+#define CRC_CRC16   *(volatile uint16_t *)0x40032000 // for writing seed and reading result
+#define CRC_GPOLY16 *(volatile uint16_t *)0x40032004 // for writing polynomial
+
+
 class RF12_T3 {
     
 public:
@@ -100,6 +108,11 @@ public:
     }
     
     
+    int8_t getAFCOffset() {
+        return afc_offset;
+    }
+    
+    
     // =====================================================
     // Transmitting data
     
@@ -127,15 +140,9 @@ public:
     
     
     // =====================================================
-    // CRC (does not touch internal state, so public)
-    inline static uint16_t crc16_update(uint16_t crc, uint8_t a);
-    
-    
-    // =====================================================
     // IRQ handling stuff (internal use only)
     void handleIrq();
     
-    volatile uint8_t drssi; // received signal strength (see dssi table)
     
 private:
     
@@ -172,11 +179,14 @@ private:
     
     // =====================================================
     // RFM12b infos
-    boolean available;  // did module responhd to reset command
+    boolean available;  // did module respond to reset command
     boolean wakeup;     // did we receive a wakeup?
     uint8_t datarate;
     volatile boolean _recvDone; // a message is waiting in "buffer"
-    
+ 
+    volatile uint8_t drssi; // received signal strength (see dssi table)
+    volatile int8_t afc_offset; // received signal AFC offset
+
     
     // =====================================================
     // Enable/Disable components / communicate to RFM12b module
@@ -203,6 +213,18 @@ private:
         buffer[0] = 0; // reset header
         buffer[1] = 0; // reset len
         rf12_crc = 0xffff;
+    }
+    
+    
+    // =====================================================
+    // CRC
+    void initCRC() {
+        SIM_SCGC6 |= SIM_SCGC6_CRC;                  // enable crc clock
+        CRC_CTRL = 0x00000000 | (1 <<30) | (1 <<28); // 16bit mode with some translation
+        CRC_GPOLY16 = 0x8005;                        // polynom
+        bitSet(CRC_CTRL,25);                         // prepare to write seed
+        CRC_CRC16 = 0xffff;                          // this is the seed
+        bitClear(CRC_CTRL,25);                       // prepare to write data
     }
     
     
