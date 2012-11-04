@@ -71,7 +71,9 @@ int RF12_T3::reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate) {
     
     // 16MHz 16bit transfers on CTAR0
     SPI0_CTAR0 = 0xF8010000;
-    SPI0_CTAR0 = 0x78010000;  // TESTING
+#ifdef RF12_DEBUG
+    SPI0_CTAR0 = 0x78010000;  // TESTING (8MHz)
+#endif
     
     // 2MHz 8bit transfers on CTAR1 (for reading FIFO)
     SPI0_CTAR1 = 0x38010002;

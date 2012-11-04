@@ -9,6 +9,10 @@
 #include <stdlib.h> // for malloc and free
 
 
+// Uncomment following line to limit to 8MHz SPI transfers
+//#define RF12_DEBUG
+
+
 /**
  * Known requency bands.
  */
