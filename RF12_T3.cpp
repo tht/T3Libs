@@ -2,6 +2,11 @@
 // Implementation file for RFM12B library for Teensy 3.0
 // 2012: tht https://github.com/tht
 
+/*
+In an attempt to make it easier to change the irq pin;
+renamed _handleIrq4 to _handleIrqT3
+*/
+
 #include "RF12_T3.h"
 
 // Init singleton cariable
@@ -81,7 +86,7 @@ int RF12_T3::reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate) {
     
     // register irq
     pinMode(irqLine, INPUT);
-    attachInterrupt(irqLine, RF12_T3::_handleIrq4, LOW);
+    attachInterrupt(irqLine, RF12_T3::_handleIrqT3, LOW);
     
     // requesting RFM12b reset
     rf12_xfer(0xCA82); // enable software reset
@@ -112,7 +117,7 @@ inline uint16_t RF12_T3::rf12_xfer(uint16_t data) {
  */
 void RF12_T3::handleIrq() {
     // check if we really have to do something
-    if (digitalRead(4) == HIGH)
+    if (digitalRead(IRQPIN) == HIGH)
         return;
     
     // reading state

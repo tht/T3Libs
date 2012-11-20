@@ -40,6 +40,19 @@ Just clone this repository to your `Arduino Sketches/libraries` folder or copy t
 ### Current State ###
 The driver is work-in-progress, a 0.something version. I'm able to send and receive data from other wireless nodes and internal error handling is improving fast. There is still room for improvements but the driver is working stable. The external interface will most likely change a bit soon.
 
+se5a's version:
+In an attempt to make the IRQ pin easier to change, I've made these changes to the library:
+RF12_T3.h:
+    created #define IRQPIN and used IRQPIN where the irq pin was referenced 
+    renamed irqLine4 to irqLineT3
+    renamed _handleIrq4 to _handleIrqT3
+RF12_T3.cpp:
+    renamed _handleIrq4 to _handleIrqT3
+rf12_t3_demo.ino:
+    renamed irqLine4 to irqLineT3
+    
+To change the IRQ pin to ie 25, all that is required is to change the #define IRQPIN 4 to #define IRQPIN 25
+
 ### Wiring ###
 
 	._______.          .------.
