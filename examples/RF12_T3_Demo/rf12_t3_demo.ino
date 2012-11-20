@@ -8,7 +8,7 @@
 HardwareSerial Uart = HardwareSerial();
 
 // RFM12b Module on irqLine4, nodeid 21, 868MHz, group 212
-RF12_T3 *RF12 = RF12_T3::irqLine4();
+RF12_T3 *RF12 = RF12_T3::irqLineT3();
 
 
 int drssi[32];

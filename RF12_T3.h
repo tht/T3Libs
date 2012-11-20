@@ -2,12 +2,20 @@
 // Header file for RFM12B library for Teensy 3.0
 // 2012: tht https://github.com/tht
 
+/*
+In an attempt to make it easier to change the irq pin;
+created #define IRQPIN and used IRQPIN where the irq pin was referenced 
+renamed irqLine4 to irqLineT3
+renamed _handleIrq4 to _handleIrqT3
+*/
+
 #ifndef RF12_T3_h
 #define RF12_T3_h
 
 #include "Arduino.h";
 #include <stdlib.h> // for malloc and free
 
+#define IRQPIN 4
 
 /**
  * Known requency bands.
@@ -32,11 +40,11 @@ public:
     // =====================================================
     // Init
     
-    // returns instance for IRQ pin 4
-    static RF12_T3* irqLine4() {
+    // returns instance for IRQPIN
+    static RF12_T3* irqLineT3() {
         if (!_instance) {
             _instance = (RF12_T3*)malloc(sizeof(RF12_T3));
-            _instance->setIrq(4);
+            _instance->setIrq(IRQPIN);
         }
         return _instance;
     }
@@ -188,7 +196,7 @@ private:
     
     inline uint16_t rf12_xfer(uint16_t data);
     
-    static void _handleIrq4() {
+    static void _handleIrqT3() {
         _instance->handleIrq();
     }
     
