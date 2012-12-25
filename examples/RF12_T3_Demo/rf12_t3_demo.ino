@@ -4,15 +4,11 @@
 
 #include "RF12_T3.h"
 
-// for debug output to serial port
-HardwareSerial Uart = HardwareSerial();
+// comment out following line to get JeeNode default datarate
+#define SPEED 0x40  // 5k305
 
 // RFM12b Module on irqLine4, nodeid 21, 868MHz, group 212
 RF12_T3 *RF12 = RF12_T3::irqLine4();
-
-
-int drssi[32];
-
 
 /**
  * setup()
@@ -20,24 +16,31 @@ int drssi[32];
  */
 void setup() {
   // init debug output
-  Uart.begin(115200);
-  Uart.println("Starting...");
-  
-  // Very slow non JeeNode datarate! Remove 0x40 to get JeeNode defaults.
+
+  // Serial needs a delay after power-on
+  delay(1000);
+  Serial.begin(57600);
+  Serial.println("Starting...");
+
+  // initialize RFM module  
+#ifdef SPEED
   RF12->reinit(21, RF12_BAND868MHZ, 212, 0x40);
+#else
+  RF12->reinit(21, RF12_BAND868MHZ, 212);
+#endif
 
   // Wait until we're allowed to send, send an empty packet
   while(! RF12->canSend()) ;
-  Uart.println("Sending an empty packet...");
+  Serial.println("Sending an empty packet...");
   RF12->sendStart(0);
 
   // Wait until we're allowed to send, send an 4 byte packet
   while(! RF12->canSend()) ;
-  Uart.println("Sending a packet...");
+  Serial.println("Sending a packet...");
   uint32_t data = 0x12345678;
   RF12->sendStart(0, &data, 4);
   
-  Uart.flush();
+  Serial.flush();
 }
 
 
@@ -52,38 +55,23 @@ void loop() {
 
     // check CRC
     if (RF12->rf12_crc == 0)
-      Uart.print("OK ");
+      Serial.print("OK ");
     else
-      Uart.print(" ? ");
+      Serial.print(" ? ");
       
-    Uart.print(RF12->buffer[0], DEC);
+    Serial.print(RF12->buffer[0], DEC);
 
     // print content of packet
     for(int i=0; i<RF12->buffer[1]; i++) {
-      Uart.print(" ");
-      Uart.print(RF12->buffer[i+2], DEC);
+      Serial.print(" ");
+      Serial.print(RF12->buffer[i+2], DEC);
     }
 
-    Uart.print(" (");
-    Uart.print(d, DEC);
-    Uart.print("dB, AFC: ");
-    Uart.print(RF12->getAFCOffset(), DEC);
-    Uart.println(")");
-    Uart.flush();
-    
-    // Update drssi table
-    drssi[nodeId]=d;
-      
-    // output rssi list
-    Uart.print("DRSSI: ");
-    for (int i=0; i<32; i++) {
-      if (drssi[i]!=0) {
-        Uart.print(i, DEC);
-        Uart.print(":");
-        Uart.print(drssi[i], DEC);
-        Uart.print("dB "); 
-      }
-    }
-    Uart.println();
+    Serial.print(" (");
+    Serial.print(d, DEC);
+    Serial.print(", AFC: ");
+    Serial.print(RF12->getAFCOffset(), DEC);
+    Serial.println(")");
+    Serial.flush();
   }
 }
