@@ -39,8 +39,6 @@ int EthernetClient::connect(IPAddress ip, uint16_t port) {
   if (_sock != MAX_SOCK_NUM)
     return 0;
 
-	Serial.println("Connect called");
-
   for (int i = 0; i < MAX_SOCK_NUM; i++) {
     uint8_t s = W5200.readSnSR(i);
     if (s == SnSR::CLOSED || s == SnSR::FIN_WAIT || s == SnSR::CLOSE_WAIT) {
@@ -51,8 +49,6 @@ int EthernetClient::connect(IPAddress ip, uint16_t port) {
 
   if (_sock == MAX_SOCK_NUM)
     return 0;
-
-	Serial.println("Found socket!");
 
   _srcport++;
   if (_srcport == 0) _srcport = 1024;

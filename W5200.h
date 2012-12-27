@@ -206,12 +206,11 @@ private:
   }
 #define __GP_REGISTER16(name, address)            \
   static void write##name(uint16_t _data) {       \
-    write(address,   _data >> 8);                 \
-    write(address+1, _data & 0xFF);               \
+    write(address, (uint8_t*) &_data, 2);         \
   }                                               \
   static uint16_t read##name() {                  \
-    uint16_t res = read(address);                 \
-    res = (res << 8) + read(address + 1);         \
+    uint16_t res;                                 \
+    read(address, (uint8_t*) &res, 2);            \
     return res;                                   \
 }
 #define __GP_REGISTER_N(name, address, size)      \

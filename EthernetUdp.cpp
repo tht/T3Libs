@@ -120,11 +120,8 @@ int EthernetUDP::parsePacket()
   // discard any remaining bytes in the last packet
   flush();
 
-  Serial.println("u0");
-
   if (W5200.getRXReceivedSize(_sock) > 0)
   {
-    Serial.println("u1");
     //HACK - hand-parse the UDP packet using TCP recv method
     uint8_t tmpBuf[8];
     int ret =0; 
@@ -132,7 +129,6 @@ int EthernetUDP::parsePacket()
     ret = recv(_sock,tmpBuf,8);
     if (ret > 0)
     {
-      Serial.println("u2");
       _remoteIP = tmpBuf;
       _remotePort = tmpBuf[4];
       _remotePort = (_remotePort << 8) + tmpBuf[5];

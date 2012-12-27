@@ -35,8 +35,6 @@ void DhcpClass::reset_DHCP_lease(){
 //return:0 on error, 1 if request is sent and response is received
 int DhcpClass::request_DHCP_lease(){
     
-    Serial.println("request_DHCP_lease");
-    
     uint8_t messageType = 0;
   
     
@@ -138,9 +136,6 @@ void DhcpClass::send_DHCP_MESSAGE(uint8_t messageType, uint16_t secondsElapsed)
     uint8_t buffer[32];
     memset(buffer, 0, 32);
     IPAddress dest_addr( 255, 255, 255, 255 ); // Broadcast address
-
-    Serial.print("send_DHCP_MESSAGE of type: ");
-    Serial.println(messageType, HEX);
 
     if (-1 == _dhcpUdpSocket.beginPacket(dest_addr, DHCP_SERVER_PORT))
     {
@@ -259,11 +254,7 @@ uint8_t DhcpClass::parseDHCPResponse(unsigned long responseTimeout, uint32_t& tr
     uint8_t type = 0;
     uint8_t opt_len = 0;
  
-    Serial.println("parseDHCPResponse");
-    
     unsigned long startTime = millis();
-
-    Serial.println("0");
 
     while(_dhcpUdpSocket.parsePacket() <= 0)
     {
@@ -274,13 +265,9 @@ uint8_t DhcpClass::parseDHCPResponse(unsigned long responseTimeout, uint32_t& tr
         delay(50);
     }
     
-    Serial.println("0");
-
     // start reading in the packet
     RIP_MSG_FIXED fixedMsg;
     _dhcpUdpSocket.read((uint8_t*)&fixedMsg, sizeof(RIP_MSG_FIXED));
-
-     Serial.println("1");
 
     if(fixedMsg.op == DHCP_BOOTREPLY && _dhcpUdpSocket.remotePort() == DHCP_SERVER_PORT)
     {
@@ -292,8 +279,6 @@ uint8_t DhcpClass::parseDHCPResponse(unsigned long responseTimeout, uint32_t& tr
             return 0;
         }
 
-     Serial.println("2");
-
         memcpy(_dhcpLocalIp, fixedMsg.yiaddr, 4);
 
         // Skip to the option part
@@ -303,8 +288,6 @@ uint8_t DhcpClass::parseDHCPResponse(unsigned long responseTimeout, uint32_t& tr
         {
             _dhcpUdpSocket.read(); // we don't care about the returned byte
         }
-
-     Serial.println("3");
 
         while (_dhcpUdpSocket.available() > 0) 
         {
@@ -392,12 +375,8 @@ uint8_t DhcpClass::parseDHCPResponse(unsigned long responseTimeout, uint32_t& tr
         }
     }
 
-     Serial.println("4");
-
     // Need to skip to end of the packet regardless here
     _dhcpUdpSocket.flush();
-
-     Serial.println("5");
 
     return type;
 }
@@ -412,8 +391,6 @@ uint8_t DhcpClass::parseDHCPResponse(unsigned long responseTimeout, uint32_t& tr
     4/DHCP_CHECK_REBIND_OK: rebind success
 */
 int DhcpClass::checkLease(){
-    Serial.println("checkLease");
-
     //this uses a signed / unsigned trick to deal with millis overflow
     unsigned long now = millis();
     signed long snow = (long)now;
