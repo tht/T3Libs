@@ -13,6 +13,21 @@
 
 #include "w5200.h"
 
+
+// ==========================================================================
+// Some configuration options
+
+// SPI Transfer Speed (reduce for debugging, see datasheet p968ff)
+#define SPI_CTAR 0xB8010000 // 16MHz
+//#define SPI_CTAR 0xB8000000 // 24MHz
+
+// SlaveSelect pin for W55200
+#define W5200SS 9
+
+// End of configuration options
+// ==========================================================================
+
+
 // W5200 controller instance
 W5200Class W5200;
 
@@ -28,10 +43,10 @@ void W5200Class::init(void) {
     // configure SPI pins
     digitalWriteFast(SCK, LOW);
     digitalWriteFast(MOSI, LOW);
-    digitalWriteFast(9, HIGH);
+    digitalWriteFast(W5200SS, HIGH);
     pinMode(SCK, OUTPUT);
     pinMode(MOSI, OUTPUT);
-    pinMode(9, OUTPUT);
+    pinMode(W5200SS, OUTPUT);
     
     // enables and configures SPI module
     SIM_SCGC6 |= SIM_SCGC6_SPI0;  // enable SPI clock
@@ -78,24 +93,18 @@ void W5200Class::send_data_processing(SOCKET s, const uint8_t *data, uint16_t le
 }
 
 void W5200Class::send_data_processing_offset(SOCKET s, uint16_t data_offset, const uint8_t *data, uint16_t len) {
-    Serial.print("send_data_processing_offset(");
-    Serial.print(s, DEC); Serial.print(", ");
-    Serial.print(data_offset, HEX); Serial.print(", 0x...., ");
-    Serial.print(len, DEC); Serial.println(");");
     
     uint16_t ptr = readSnTX_WR(s);
     ptr += data_offset;
     uint16_t offset = ptr & SMASK;
     uint16_t dstAddr = offset + SBASE[s];
     
-    if (offset + len > SSIZE)
-    {
+    if (offset + len > SSIZE) {
         // Wrap around circular buffer
         uint16_t size = SSIZE - offset;
         write(dstAddr, data, size);
         write(SBASE[s], data + size, len - size);
-    }
-    else {
+    } else {
         write(dstAddr, data, len);
     }
     
@@ -140,9 +149,9 @@ uint8_t W5200Class::write(uint16_t addr, uint8_t data) {
 }
 
 uint16_t W5200Class::write(uint16_t addr, const uint8_t *data, uint16_t data_len) {
-    // 16MHz 8bit transfers on CTAR0
-    SPI0_CTAR0 = 0xB8010000;
-    digitalWriteFast(9, LOW);
+    // 8bit transfers
+    SPI0_CTAR0 = SPI_CTAR;
+    digitalWriteFast(W5200SS, LOW);
     
     SPI0_PUSHR = (1<<26) | ((addr & 0xFF00) >> 8);
     SPI0_PUSHR =           ( addr & 0xFF);
@@ -173,9 +182,9 @@ uint8_t W5200Class::read(uint16_t _addr) {
 }
 
 uint16_t W5200Class::read(uint16_t addr, uint8_t *data, uint16_t data_len) {
-    // 16MHz 8bit transfers on CTAR0
-    SPI0_CTAR0 = 0xB8010000;
-    digitalWriteFast(9, LOW);
+    // 8bit transfers
+    SPI0_CTAR0 = SPI_CTAR;
+    digitalWriteFast(W5200SS, LOW);
     
     SPI0_PUSHR = (1<<26) | ((addr & 0xFF00) >> 8);
     SPI0_PUSHR =           ( addr & 0xFF);
