@@ -114,11 +114,11 @@ void W5200Class::send_data_processing_offset(SOCKET s, uint16_t data_offset, con
 
 
 void W5200Class::recv_data_processing(SOCKET s, uint8_t *data, uint16_t len, uint8_t peek) {
+    
     uint16_t ptr;
     ptr = readSnRX_RD(s);
     read_data(s, ptr, data, len);
-    if (!peek)
-    {
+    if (!peek) {
         ptr += len;
         writeSnRX_RD(s, ptr);
     }
@@ -128,19 +128,19 @@ void W5200Class::read_data(SOCKET s, uint16_t src, volatile uint8_t *dst, uint16
     uint16_t size;
     uint16_t src_mask;
     uint16_t src_ptr;
-    
+
     src_mask = (uint16_t)src & RMASK;
     src_ptr = RBASE[s] + src_mask;
-    
-    if( (src_mask + len) > RSIZE )
-    {
+
+    if( (src_mask + len) > RSIZE ) {
         size = RSIZE - src_mask;
         read(src_ptr, (uint8_t *)dst, size);
         dst += size;
         read(RBASE[s], (uint8_t *) dst, len - size);
     }
-    else
+    else {
         read(src_ptr, (uint8_t *) dst, len);
+    }
 }
 
 
@@ -193,26 +193,14 @@ uint16_t W5200Class::read(uint16_t addr, uint8_t *data, uint16_t data_len) {
     SPI0_PUSHR =           ( data_len & 0xFF);
     
     while ((0xF & (SPI0_SR >> 12)) != 0) ; // wait until all is sent
-    bitSet(SPI0_MCR, 10);                  // clear RX FIFO
-    
+
     while ((0xF & (SPI0_SR >> 4)) != 0)    // discard everything from RX FIFO
         uint8_t discard = SPI0_POPR;
     
-    // preloading TX buffer
-    uint8_t to_send = data_len;
-    while ( (0xF & (SPI0_SR >> 12)) != 4 && to_send) {
-        SPI0_PUSHR = 0;
-        --to_send;
-    }
-    
     for (int i=0; i<data_len; i++) {
-        while ((0xF & (SPI0_SR >> 4)) == 0) ; // wait until we get a byte
+        SPI0_PUSHR = 0;
+        while ( ! (0xF & (SPI0_SR >> 4)) ) ; // wait until we get a byte
         data[i] = SPI0_POPR;
-        
-        if ( to_send) {
-            SPI0_PUSHR = 0;
-            --to_send;
-        }
     }
     
     digitalWriteFast(9, HIGH);
