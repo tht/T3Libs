@@ -1,7 +1,5 @@
 #include "mac.h"
 
-uint8_t mac[6];
-
 // http://forum.pjrc.com/threads/91-teensy-3-MAC-address
 void read(uint8_t word, uint8_t *mac, uint8_t offset) {
   FTFL_FCCOB0 = 0x41;             // Selects the READONCE command
@@ -16,12 +14,12 @@ void read(uint8_t word, uint8_t *mac, uint8_t offset) {
   *(mac+offset+2) = FTFL_FCCOB7;       // Skip FTFL_FCCOB4 as it's always 0.
 }
 
-void read_mac() {
-  read(0xe,mac,0);
-  read(0xf,mac,3);
+void read_mac(uint8_t *buffer) {
+  read(0xe,buffer,0);
+  read(0xf,buffer,3);
 }
 
-void print_mac()  {
+void print_mac(uint8_t *mac)  {
   size_t count = 0;
   for(uint8_t i = 0; i < 6; ++i) {
     if (i!=0) count += Serial.print(":");

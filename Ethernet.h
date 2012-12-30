@@ -19,6 +19,7 @@ public:
   // Initialise the Ethernet shield to use the provided MAC address and gain the rest of the
   // configuration through DHCP.
   // Returns 0 if the DHCP configuration failed, and 1 if it succeeded
+  int begin();
   int begin(uint8_t *mac_address);
   void begin(uint8_t *mac_address, IPAddress local_ip);
   void begin(uint8_t *mac_address, IPAddress local_ip, IPAddress dns_server);

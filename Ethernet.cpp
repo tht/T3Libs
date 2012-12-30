@@ -1,4 +1,5 @@
 #include "W5200.h"
+#include "mac.h"
 #include "Ethernet.h"
 #include "Dhcp.h"
 
@@ -8,10 +9,15 @@ uint8_t EthernetClass::_state[MAX_SOCK_NUM] = {
 uint16_t EthernetClass::_server_port[MAX_SOCK_NUM] = { 
   0, 0, 0, 0 };
 
+int EthernetClass::begin() {
+	uint8_t mac[6];  // place to store mac address
+	read_mac(mac);
+	begin(mac);
+}
+
 int EthernetClass::begin(uint8_t *mac_address)
 {
   _dhcp = new DhcpClass();
-
 
   // Initialise the basic info
   W5200.init();
