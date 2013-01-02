@@ -118,6 +118,8 @@ int DNSClient::getHostByName(const char* aHostname, IPAddress& aResult)
 {
     int ret =0;
 
+Serial.println("dns1");
+
     // See if it's a numeric IP address
     if (inet_aton(aHostname, aResult))
     {
@@ -125,12 +127,16 @@ int DNSClient::getHostByName(const char* aHostname, IPAddress& aResult)
         return 1;
     }
 
+Serial.println("dns2");
+
     // Check we've got a valid DNS server to use
     if (iDNSServer == INADDR_NONE)
     {
         return INVALID_SERVER;
     }
 	
+Serial.println("dns3");
+
     // Find a socket to use
     if (iUdp.begin(1024+(millis() & 0xF)) == 1)
     {
@@ -138,6 +144,9 @@ int DNSClient::getHostByName(const char* aHostname, IPAddress& aResult)
         int retries = 0;
 //        while ((retries < 3) && (ret <= 0))
         {
+
+Serial.println("dns4");
+
             // Send DNS request
             ret = iUdp.beginPacket(iDNSServer, DNS_PORT);
             if (ret != 0)
@@ -146,6 +155,9 @@ int DNSClient::getHostByName(const char* aHostname, IPAddress& aResult)
                 ret = BuildRequest(aHostname);
                 if (ret != 0)
                 {
+
+Serial.println("dns5");
+
                     // And finally send the request
                     ret = iUdp.endPacket();
                     if (ret != 0)
@@ -155,6 +167,8 @@ int DNSClient::getHostByName(const char* aHostname, IPAddress& aResult)
                         ret = TIMED_OUT;
                         while ((wait_retries < 3) && (ret == TIMED_OUT))
                         {
+Serial.println("dns6");
+
                             ret = ProcessResponse(5000, aResult);
                             wait_retries++;
                         }
@@ -254,14 +268,18 @@ uint16_t DNSClient::BuildRequest(const char* aName)
 uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress)
 {
     uint32_t startTime = millis();
+	int pkglen = 0;
 
     // Wait for a response packet
-    while(iUdp.parsePacket() <= 0)
+    while( (pkglen = iUdp.parsePacket()) <= 0)
     {
         if((millis() - startTime) > aTimeout)
             return TIMED_OUT;
         delay(50);
     }
+    
+Serial.print("DNS response packet length: ");
+Serial.println(pkglen, DEC);
 
     // We've had a reply!
     // Read the UDP header
@@ -270,6 +288,7 @@ uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress)
     if ( (iDNSServer != iUdp.remoteIP()) || 
         (iUdp.remotePort() != DNS_PORT) )
     {
+Serial.println("dns invalid server");
         // It's not from who we expected
         return INVALID_SERVER;
     }
@@ -299,6 +318,8 @@ uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress)
         return -5; //INVALID_RESPONSE;
     }
 
+Serial.println("dns 11");
+
     // And make sure we've got (at least) one answer
     uint16_t answerCount = htons(*((uint16_t*)&header[6]));
     if (answerCount == 0 )
@@ -308,6 +329,8 @@ uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress)
         return -6; //INVALID_RESPONSE;
     }
 
+Serial.println("dns 12");
+
     // Skip over any questions
     for (uint16_t i =0; i < htons(*((uint16_t*)&header[4])); i++)
     {
@@ -316,6 +339,9 @@ uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress)
         do
         {
             iUdp.read(&len, sizeof(len));
+delay(100);
+Serial.print("  len: ");
+Serial.println(len, DEC);
             if (len > 0)
             {
                 // Don't need to actually read the data out for the string, just
@@ -325,7 +351,7 @@ uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress)
                     iUdp.read(); // we don't care about the returned byte
                 }
             }
-        } while (len != 0);
+        } while (len != 0 && len != 255);
 
         // Now jump over the type and class
         for (int i =0; i < 4; i++)
@@ -333,6 +359,8 @@ uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress)
             iUdp.read(); // we don't care about the returned byte
         }
     }
+
+Serial.println("dns 13");
 
     // Now we're up to the bit we're interested in, the answer
     // There might be more than one answer (although we'll just use the first
@@ -375,6 +403,8 @@ uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress)
             }
         } while (len != 0);
 
+Serial.println("dns 14");
+
         // Check the type and class
         uint16_t answerType;
         uint16_t answerClass;
@@ -386,6 +416,8 @@ uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress)
         {
             iUdp.read(); // we don't care about the returned byte
         }
+
+Serial.println("dns 15");
 
         // And read out the length of this answer
         // Don't need header_flags anymore, so we can reuse it here
@@ -412,6 +444,8 @@ uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress)
             }
         }
     }
+
+Serial.println("dns 16");
 
     // Mark the entire packet as read
     iUdp.flush();
