@@ -149,6 +149,8 @@ uint8_t W5200Class::write(uint16_t addr, uint8_t data) {
 }
 
 uint16_t W5200Class::write(uint16_t addr, const uint8_t *data, uint16_t data_len) {
+    noInterrupts();
+
     // 8bit transfers
     SPI0_CTAR0 = SPI_CTAR;
     digitalWriteFast(W5200SS, LOW);
@@ -171,6 +173,8 @@ uint16_t W5200Class::write(uint16_t addr, const uint8_t *data, uint16_t data_len
     while (SPI0_TCR != data_sent) ; // loop until transfer is complete
     
     digitalWriteFast(9, HIGH);
+    interrupts();
+
     return data_len;
 }
 
@@ -182,6 +186,8 @@ uint8_t W5200Class::read(uint16_t _addr) {
 }
 
 uint16_t W5200Class::read(uint16_t addr, uint8_t *data, uint16_t data_len) {
+    noInterrupts();
+
     // 8bit transfers
     SPI0_CTAR0 = SPI_CTAR;
     digitalWriteFast(W5200SS, LOW);
@@ -204,6 +210,8 @@ uint16_t W5200Class::read(uint16_t addr, uint8_t *data, uint16_t data_len) {
     }
     
     digitalWriteFast(9, HIGH);
+    interrupts();
+
     return data_len;
 }
 

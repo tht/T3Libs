@@ -68,12 +68,6 @@ int RF12_T3::reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate) {
     SPCR |= _BV(SPE);
     SPCR &= ~(_BV(DORD));   // MSBFIRST SPI
     
-    // 16MHz 16bit transfers on CTAR0
-    SPI0_CTAR0 = 0xF8010000;
-    
-    // 2MHz 8bit transfers on CTAR1 (for reading FIFO)
-    SPI0_CTAR1 = 0x38010002;
-    
     // init some values
     _index = 0;
     buffer[0] = 0;  // reset header
@@ -96,6 +90,7 @@ int RF12_T3::reinit(uint8_t id, uint8_t band, uint8_t group, uint8_t rate) {
  * Return: From RFM12 module received data
  */
 inline uint16_t RF12_T3::rf12_xfer(uint16_t data) {
+    SPI0_CTAR0 = 0xF8010000;
     digitalWriteFast(10, LOW);
     SPI0_PUSHR = (1<<26) | data;    // send data (clear transfer counter)
     while (! SPI0_TCR) ; // loop until transfer is complete
@@ -114,8 +109,11 @@ void RF12_T3::handleIrq() {
     // check if we really have to do something
     if (digitalRead(4) == HIGH)
         return;
+
+    noInterrupts(); // make sure noone interrupts here
     
     // reading state
+    SPI0_CTAR0 = 0xF8010000;
     digitalWriteFast(10, LOW);  // select RFM12b module
     SPI0_PUSHR = (1<<26) | 0x0000;    // send data (clear transfer counter)
     while (! SPI0_TCR) ; // loop until transfer is complete
@@ -127,10 +125,12 @@ void RF12_T3::handleIrq() {
         // =====================================================
         // FIFO has a byte to read
         if (state == RF_RECV) {
+            SPI0_CTAR1 = 0x38010002;
             SPI0_PUSHR = (1<<28) | (1<<26); // CTAR1 transfer (slow 8bit), clear transfer counter
             while (! SPI0_TCR) ; // loop until transfer is complete
             uint8_t data = (uint8_t) SPI0_POPR;
             digitalWriteFast(10, HIGH);
+            interrupts();
             
             // do drssi binary-tree search
             if ( drssi < 6 ) {       // not yet final value
@@ -171,6 +171,7 @@ void RF12_T3::handleIrq() {
             // Buffer needs neyt byte to send
         } else {
             digitalWriteFast(10, HIGH);
+            interrupts();
             
             rf12_xfer(0xB800 | _toSend);
             
